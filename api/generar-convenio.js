@@ -1,10 +1,10 @@
 // api/generar-convenio.js
 // API Serverless para generar PDFs de convenios usando PDFKit - Formato Avanta
 // Diseñada para Vercel
-
 const PDFDocument = require('pdfkit');
 
 // Función para generar el PDF en memoria y devolverlo como base64
+export default async function handler(req, res) {
 async function generarPDFConvenio(numeroConvenio, cliente, fecha) {// Configurar headers CORS
 res.setHeader('Access-Control-Allow-Origin', '*');
 res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
