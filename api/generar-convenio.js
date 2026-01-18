@@ -226,7 +226,20 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { numeroConvenio, cliente, fecha } = req.body;
+    // Parsear el body si viene como string
+let body = req.body;
+if (typeof body === 'string') {
+  try {
+    body = JSON.parse(body);
+  } catch (e) {
+    return res.status(400).json({ 
+      error: 'Invalid JSON in request body',
+      message: e.message 
+    });
+  }
+}
+
+const { numeroConvenio, cliente, fecha } = body;
 
     // Validar datos requeridos
     if (!numeroConvenio || !cliente || !fecha) {
