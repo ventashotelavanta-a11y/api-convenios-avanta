@@ -4,6 +4,16 @@
 
 const PDFDocument = require('pdfkit');
 
+// Configurar headers CORS
+res.setHeader('Access-Control-Allow-Origin', '*');
+res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+// Manejar preflight request
+if (req.method === 'OPTIONS') {
+  res.status(200).end();
+  return;
+}
 // Función para generar el PDF en memoria y devolverlo como base64
 async function generarPDFConvenio(numeroConvenio, cliente, fecha) {
   return new Promise((resolve, reject) => {
