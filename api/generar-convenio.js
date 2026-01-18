@@ -205,24 +205,17 @@ async function generarPDFConvenio(numeroConvenio, cliente, fecha) {
   });
 }
 
-// Helper function para parsear el body
-function parseRequestBody(req) {
-  // Si ya es un objeto, devolverlo
-  if (typeof req.body === 'object' && req.body !== null) {
-    return req.body;
-  }
-  
-  // Si es un string, intentar parsearlo
-  if (typeof req.body === 'string') {
-    try {
-      return JSON.parse(req.body);
-    } catch (e) {
-      throw new Error('Invalid JSON in request body');
-    }
-  }
-  
-  // Si no hay body, devolver objeto vacío
-  return {};
+// Función para leer el body del request
+async function getRawBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', chunk => chunks.push(chunk));
+    req.on('end', () => {
+      const buffer = Buffer.concat(chunks);
+      resolve(buffer.toString('utf8'));
+    });
+    req.on('error', reject);
+  });
 }
 
 // Handler principal para Vercel
@@ -246,11 +239,24 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Parsear el body
-    const body = parseRequestBody(req);
+    // Leer el body manualmente del stream
+    const rawBody = await getRawBody(req);
+    console.log('Raw body recibido:', rawBody);
     
-    // Log para debugging (se verá en los logs de Vercel)
-    console.log('Body recibido:', JSON.stringify(body, null, 2));
+    // Parsear el JSON
+    let body;
+    try {
+      body = JSON.parse(rawBody);
+    } catch (parseError) {
+      console.error('Error parseando JSON:', parseError);
+      return res.status(400).json({
+        error: 'JSON inválido',
+        message: parseError.message,
+        receivedBody: rawBody.substring(0, 200) // Primeros 200 caracteres para debug
+      });
+    }
+
+    console.log('Body parseado:', JSON.stringify(body, null, 2));
 
     const { numeroConvenio, cliente, fecha } = body;
 
@@ -285,6 +291,8 @@ module.exports = async (req, res) => {
 
     // Nombre del archivo
     const fileName = `Convenio_${numeroConvenio}_${cliente.empresaNormalizada || cliente.empresa}.pdf`;
+
+    console.log('PDF generado exitosamente:', fileName);
 
     // Responder con el PDF en base64
     return res.status(200).json({
